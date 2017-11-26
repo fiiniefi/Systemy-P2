@@ -15,6 +15,7 @@ void *hunter_routine(void *)
     if (std::rand() % 6 > std::rand() % 6) //first for hunter, second for prey
         meat_numb++;
     consume(hunters_numb);
+    usleep(10000);
     pthread_exit(NULL);
 }
 
@@ -27,6 +28,7 @@ void *cook_routine(void *)
         meal_numb++;
     }
     consume(cooks_numb);
+    usleep(10000);
     pthread_exit(NULL);
 }
 
@@ -55,6 +57,13 @@ int main(int argc, char *argv[])
 
     for (int i = 1 ; i <= 100 ; i ++)
     {
+        for (int j = 0 ; j < cooks_numb ; j++)
+        {
+            int flag = pthread_create(&cooks[j], NULL, cook_routine, NULL);
+            if (flag)
+                std::cout<< "Error: Cook thread cannot be created" << std::endl;
+        }
+ 
         for (int j = 0 ; j < hunters_numb ; j++)
         {
             int flag = pthread_create(&hunters[j], NULL, hunter_routine, NULL);
@@ -62,12 +71,6 @@ int main(int argc, char *argv[])
                 std::cout << "Error: Hunter thread cannot be created" << std::endl;
         }
 
-        for (int j = 0 ; j < cooks_numb ; j++)
-        {
-            int flag = pthread_create(&cooks[j], NULL, cook_routine, NULL);
-            if (flag)
-                std::cout<< "Error: Cook thread cannot be created" << std::endl;
-        }
         //usleep(1000);
         std::cout << "Number of hunters after " << i << " day(s): " << hunters_numb << std::endl;
         std::cout << "Number of cooks after " << i << " day(s): " << cooks_numb << std::endl;
