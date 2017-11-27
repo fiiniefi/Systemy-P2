@@ -9,4 +9,4 @@ main.o: settlers.cpp
 	$(CC) $(CFLAGS) settlers.cpp -c -o settlers.o
 
 run: settlers
-	./settlers 10 11 3 77
+	./settlers 22 10 10 3000

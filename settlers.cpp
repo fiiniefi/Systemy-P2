@@ -1,48 +1,69 @@
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
+#include <semaphore.h>
 //#include <thread>
 
 int hunters_numb, cooks_numb, meat_numb, meal_numb;
+sem_t work;
+sem_t eat;
 void *hunter_routine(void *);
 void *cook_routine(void *);
 void consume(int &);
 
 
+//int cooks_job, hunters_job; //debug
+
 void *hunter_routine(void *)
 {
+    sem_wait(&work);
+//hunters_job++; //debug
     srand(time(NULL));
-    if (std::rand() % 6 > std::rand() % 6) //first for hunter, second for prey
+    int throw_hunter = std::rand() % 6;
+    int throw_prey = std::rand() % 6;
+    if (throw_hunter > throw_prey)
+    {
         meat_numb++;
+    }
+    sem_post(&work);
+    sem_wait(&eat);
     consume(hunters_numb);
-    usleep(10000);
+    sem_post(&eat);
+    usleep(100);
     pthread_exit(NULL);
 }
 
 
 void *cook_routine(void *)
 {
-    if (meat_numb >= 0)
+    sem_wait(&work);
+//cooks_job++; //debug
+    if (meat_numb > 0)
     {
         meat_numb--;
-        meal_numb++;
+        meal_numb += (std::rand() % 6);
     }
+    sem_post(&work);
+    sem_wait(&eat);
     consume(cooks_numb);
-    usleep(10000);
+    sem_post(&eat);
+    usleep(100);
     pthread_exit(NULL);
 }
 
 void consume(int &villagers_numb)
 {
-    if (meal_numb >= 0)
+    if (meal_numb > 0)
         meal_numb--;
-    else if (villagers_numb >= 0)
+    else if (villagers_numb > 0)
         villagers_numb--;
 }
 
 
 int main(int argc, char *argv[])
 {
+    sem_init(&work, 0, 1);
+    sem_init(&eat, 0, 1);
     if (argc < 5)
     {
         std::cout << "Program " << argv[0] << " needs 4 arguments: hunters_numb, cooks_numb, meat_numb, meal_numb" << std::endl;
@@ -55,7 +76,7 @@ int main(int argc, char *argv[])
     pthread_t hunters[hunters_numb];
     pthread_t cooks[cooks_numb];
 
-    for (int i = 1 ; i <= 100 ; i ++)
+    for (int i = 1 ; i <= 365 ; i ++)
     {
         for (int j = 0 ; j < cooks_numb ; j++)
         {
@@ -71,10 +92,20 @@ int main(int argc, char *argv[])
                 std::cout << "Error: Hunter thread cannot be created" << std::endl;
         }
 
-        //usleep(1000);
+        for (int j = 0 ; j < cooks_numb ; j++)
+        {
+            pthread_join(cooks[j], NULL);
+        }
+ 
+        for (int j = 0 ; j < hunters_numb ; j++)
+        {
+            pthread_join(hunters[j], NULL);
+        }
         std::cout << "Number of hunters after " << i << " day(s): " << hunters_numb << std::endl;
         std::cout << "Number of cooks after " << i << " day(s): " << cooks_numb << std::endl;
         std::cout << "Number of meat after " << i << " day(s): " << meat_numb << std::endl;
         std::cout << "Number of meal after " << i << " day(s): " << meal_numb << std::endl;
+//std::cout<<"Cooks job: "<<cooks_job<<std::endl; //debug
+//std::cout<<"Hunters job: "<<hunters_job<<std::endl; //debug
     }
 }
