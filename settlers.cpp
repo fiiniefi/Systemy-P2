@@ -5,8 +5,8 @@
 //#include <thread>
 
 int hunters_numb, cooks_numb, meat_numb, meal_numb;
-sem_t work;
-sem_t eat;
+sem_t meat;
+sem_t meal;
 void *hunter_routine(void *);
 void *cook_routine(void *);
 void consume(int &);
@@ -16,19 +16,19 @@ void consume(int &);
 
 void *hunter_routine(void *)
 {
-    sem_wait(&work);
 //hunters_job++; //debug
     srand(time(NULL));
     int throw_hunter = std::rand() % 6;
     int throw_prey = std::rand() % 6;
+    sem_wait(&meat);
     if (throw_hunter > throw_prey)
     {
         meat_numb++;
+        sem_post(&meat);
     }
-    sem_post(&work);
-    sem_wait(&eat);
+    sem_wait(&meal);
     consume(hunters_numb);
-    sem_post(&eat);
+    sem_post(&meal);
     usleep(100);
     pthread_exit(NULL);
 }
@@ -36,17 +36,17 @@ void *hunter_routine(void *)
 
 void *cook_routine(void *)
 {
-    sem_wait(&work);
 //cooks_job++; //debug
+    sem_wait(&meat);
     if (meat_numb > 0)
     {
         meat_numb--;
+        sem_post(&meat);
+        sem_wait(&meal);
         meal_numb += (std::rand() % 6);
     }
-    sem_post(&work);
-    sem_wait(&eat);
     consume(cooks_numb);
-    sem_post(&eat);
+    sem_post(&meal);
     usleep(100);
     pthread_exit(NULL);
 }
@@ -62,8 +62,8 @@ void consume(int &villagers_numb)
 
 int main(int argc, char *argv[])
 {
-    sem_init(&work, 0, 1);
-    sem_init(&eat, 0, 1);
+    sem_init(&meat, 0, 1);
+    sem_init(&meal, 0, 1);
     if (argc < 5)
     {
         std::cout << "Program " << argv[0] << " needs 4 arguments: hunters_numb, cooks_numb, meat_numb, meal_numb" << std::endl;
