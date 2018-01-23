@@ -24,11 +24,11 @@ void *hunter_routine(void *)
     if (throw_hunter > throw_prey)
     {
         meat_numb++;
-        sem_post(&meat);
     }
     sem_wait(&meal);
     consume(hunters_numb);
     sem_post(&meal);
+    sem_post(&meat); //deadlock
     usleep(100);
     pthread_exit(NULL);
 }
@@ -41,12 +41,12 @@ void *cook_routine(void *)
     if (meat_numb > 0)
     {
         meat_numb--;
-        sem_post(&meat);
         sem_wait(&meal);
         meal_numb += (std::rand() % 6);
     }
     consume(cooks_numb);
     sem_post(&meal);
+    sem_post(&meat); //deadlock
     usleep(100);
     pthread_exit(NULL);
 }
